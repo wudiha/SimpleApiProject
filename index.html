@@ -24,7 +24,8 @@
 		<title>Covid 19 Tracker</title>
 	</head>
 	<body>
-		<h1>Simple Covid Tracker (Malaysia)</h1>
+		<h1>Malaysia Covid Tracker</h1>
+
 		<div class="table-responsive">
 			<table id="myTable" class="table table-striped table-dark border-dark">
 				<thead>
@@ -45,9 +46,13 @@
 					Latest total cases
 				</caption>
 			</table>
+			<div id="chartContainer">
+				<canvas id="myChart"></canvas>
+			</div>
 		</div>
 	</body>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 	<script>
 		$(document).ready(function () {
@@ -58,28 +63,68 @@
 				var url = 'https://api.covid19api.com/country/malaysia';
 
 				$.get(url, function (data) {
-					var length = data.length - 1;
+					var length = data.length - 2;
 					for (i = 0; i <= 10; i++) {
 						data_.push(data[length - i]);
 					}
 					buildtable(data_);
 				});
 			}
+
 			function buildtable(data) {
 				var table = document.getElementById('myTable');
+				var today;
+				var yesterday;
 
-				for (i = 0; i < data.length; i++) {
-					var row = `<tr>
+				data
+					.map(function (d, i) {
+						if (i == 0) {
+							today = d.Confirmed;
+						}
+						if (i == 1) {
+							yesterday = d.Confirmed;
+						}
+					})
+					.join('');
+
+				console.log(today - yesterday);
+
+				table.innerHTML += data
+					.map(function (data, i) {
+						return `<tr>
 						<td>${i + 1}</td>
-						<td>${data[i].Active}</td>
-						<td>${data[i].Deaths}</td>
-						<td>${data[i].Confirmed}</td>
-						<td>${data[i].Recovered}</td>
-						<td>${data[i].Date}</td>
+						<td>${data.Active}</td>
+						<td>${data.Deaths}</td>
+						<td>${data.Confirmed}</td>
+						<td>${data.Recovered}</td>
+						<td>${data.Date}</td>
 						</tr>
 						`;
-					table.innerHTML += row;
-				}
+					})
+					.join('');
+				showGrapgh();
+			}
+
+			function showGrapgh() {
+				const labels = data_.reverse().map((x) => x.Date);
+				const data = {
+					labels: labels,
+					datasets: [
+						{
+							type: 'line',
+							backgroundColor: 'rgb(255, 99, 132)',
+							borderColor: 'rgb(255, 99, 132)',
+							data: data_.map((x) => x.Deaths),
+							label: 'Total Deaths',
+						},
+					],
+				};
+				const config = {
+					data,
+					options: { responsive: true, maintainAspectRatio: false },
+				};
+
+				var myChart = new Chart(document.getElementById('myChart'), config);
 			}
 		});
 	</script>
